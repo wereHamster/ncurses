@@ -1,6 +1,6 @@
-# $Id: Makefile.in,v 1.113 2008/10/18 14:11:54 tom Exp $
+# $Id: Makefile.in,v 1.119 2009/08/10 09:06:37 tom Exp $
 ##############################################################################
-# Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.                #
+# Copyright (c) 1998-2007,2009 Free Software Foundation, Inc.                #
 #                                                                            #
 # Permission is hereby granted, free of charge, to any person obtaining a    #
 # copy of this software and associated documentation files (the "Software"), #
@@ -71,6 +71,7 @@ LIBTOOL_COMPILE	= @LIB_COMPILE@
 LIBTOOL_LINK	= @LIB_LINK@
 LIBTOOL_INSTALL	= @LIB_INSTALL@
 LIBTOOL_UNINSTALL = @LIB_UNINSTALL@
+LT_UNDEF	= @LT_UNDEF@
 
 INSTALL		= @INSTALL@
 INSTALL_LIB	= @INSTALL@ @INSTALL_LIB@
@@ -78,7 +79,7 @@ INSTALL_PROG	= @INSTALL_PROGRAM@
 INSTALL_DATA	= @INSTALL_DATA@
 
 AR		= @AR@
-AR_OPTS		= @AR_OPTS@
+ARFLAGS		= @ARFLAGS@
 AWK		= @AWK@
 LD		= @LD@
 LN_S		= @LN_S@
@@ -164,11 +165,12 @@ TEST_PROGS = \
 	hashmap$x \
 	lib_mvcur$x
 
-base	= $(srcdir)/base
-serial	= $(srcdir)/tty
-tinfo	= $(srcdir)/tinfo
-trace	= $(srcdir)/trace
-wide	= $(srcdir)/widechar
+base	 = $(srcdir)/base
+serial	 = $(srcdir)/tty
+tinfo	 = $(srcdir)/tinfo
+trace	 = $(srcdir)/trace
+wide	 = $(srcdir)/widechar
+win32con = $(srcdir)/win32con
 
 ################################################################################
 all \
@@ -200,11 +202,11 @@ make_keys$(BUILD_EXEEXT) : \
 	$(BUILD_CC) -o $@ $(BUILD_CCFLAGS) $(tinfo)/make_keys.c $(BUILD_LDFLAGS) $(BUILD_LIBS)
 
 make_hash$(BUILD_EXEEXT) : \
-		$(tinfo)/comp_hash.c \
+		$(tinfo)/make_hash.c \
 		../include/hashsize.h
-	$(BUILD_CC) -o $@ $(BUILD_CCFLAGS) -DMAIN_PROGRAM $(tinfo)/comp_hash.c $(BUILD_LDFLAGS) $(BUILD_LIBS)
+	$(BUILD_CC) -o $@ $(BUILD_CCFLAGS) $(tinfo)/make_hash.c $(BUILD_LDFLAGS) $(BUILD_LIBS)
 
-./expanded.c : $(serial)/MKexpanded.sh
+./expanded.c : $(srcdir)/curses.priv.h $(serial)/MKexpanded.sh
 	sh -e $(serial)/MKexpanded.sh "$(CPP)" $(CPPFLAGS) > $@
 
 ./comp_captab.c: \

@@ -1,5 +1,5 @@
 dnl***************************************************************************
-dnl Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
+dnl Copyright (c) 1998-2008,2009 Free Software Foundation, Inc.              *
 dnl                                                                          *
 dnl Permission is hereby granted, free of charge, to any person obtaining a  *
 dnl copy of this software and associated documentation files (the            *
@@ -28,7 +28,7 @@ dnl***************************************************************************
 dnl
 dnl Author: Thomas E. Dickey 1995-on
 dnl
-dnl $Id: aclocal.m4,v 1.470 2008/10/25 22:15:32 tom Exp $
+dnl $Id: aclocal.m4,v 1.488 2009/07/17 09:14:49 tom Exp $
 dnl Macros used in NCURSES auto-configuration script.
 dnl
 dnl These macros are maintained separately from NCURSES.  The copyright on
@@ -86,7 +86,7 @@ fi
 AC_SUBST(ACPPFLAGS)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_ADD_CFLAGS version: 7 updated: 2004/04/25 17:48:30
+dnl CF_ADD_CFLAGS version: 8 updated: 2009/01/06 19:33:30
 dnl -------------
 dnl Copy non-preprocessor flags to $CFLAGS, preprocessor flags to $CPPFLAGS
 dnl The second parameter if given makes this macro verbose.
@@ -156,7 +156,7 @@ fi
 
 if test -n "$cf_new_cppflags" ; then
 	ifelse($2,,,[CF_VERBOSE(add to \$CPPFLAGS $cf_new_cppflags)])
-	CPPFLAGS="$cf_new_cppflags $CPPFLAGS"
+	CPPFLAGS="$CPPFLAGS $cf_new_cppflags"
 fi
 
 if test -n "$cf_new_extra_cppflags" ; then
@@ -168,7 +168,7 @@ AC_SUBST(EXTRA_CPPFLAGS)
 
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_ADD_INCDIR version: 9 updated: 2008/02/09 13:15:34
+dnl CF_ADD_INCDIR version: 12 updated: 2009/01/18 10:00:47
 dnl -------------
 dnl Add an include-directory to $CPPFLAGS.  Don't add /usr/include, since it's
 dnl redundant.  We don't normally need to add -I/usr/local/include for gcc,
@@ -195,7 +195,7 @@ if test -n "$1" ; then
 		fi
 
 		if test "$cf_have_incdir" = no ; then
-          if test "$cf_add_incdir" = /usr/local/include ; then
+		  if test "$cf_add_incdir" = /usr/local/include ; then
 			if test "$GCC" = yes
 			then
 			  cf_save_CPPFLAGS=$CPPFLAGS
@@ -211,11 +211,11 @@ if test -n "$1" ; then
 
 		if test "$cf_have_incdir" = no ; then
 		  CF_VERBOSE(adding $cf_add_incdir to include-path)
-		  ifelse($2,,CPPFLAGS,$2)="-I$cf_add_incdir $ifelse($2,,CPPFLAGS,[$]$2)"
+		  ifelse($2,,CPPFLAGS,$2)="$ifelse($2,,CPPFLAGS,$2) -I$cf_add_incdir"
 
-          cf_top_incdir=`echo $cf_add_incdir | sed -e 's%/include/.*$%/include%'`
-          test "$cf_top_incdir" = "$cf_add_incdir" && break
-          cf_add_incdir="$cf_top_incdir"
+		  cf_top_incdir=`echo $cf_add_incdir | sed -e 's%/include/.*$%/include%'`
+		  test "$cf_top_incdir" = "$cf_add_incdir" && break
+		  cf_add_incdir="$cf_top_incdir"
 		else
 		  break
 		fi
@@ -225,7 +225,7 @@ if test -n "$1" ; then
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_ADD_LIBDIR version: 6 updated: 2008/02/09 13:15:34
+dnl CF_ADD_LIBDIR version: 8 updated: 2009/01/18 10:01:08
 dnl -------------
 dnl	Adds to the library-path
 dnl
@@ -254,7 +254,7 @@ if test -n "$1" ; then
       fi
       if test "$cf_have_libdir" = no ; then
         CF_VERBOSE(adding $cf_add_libdir to library-path)
-        ifelse($2,,LDFLAGS,$2)="-L$cf_add_libdir $ifelse($2,,LDFLAGS,[$]$2)"
+        ifelse($2,,LDFLAGS,$2)="-L$cf_add_libdir $ifelse($2,,LDFLAGS,$2)"
       fi
     fi
   done
@@ -353,7 +353,41 @@ You have the following choices:
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_AWK_BIG_PRINTF version: 2 updated: 2008/10/04 17:16:18
+dnl CF_AR_FLAGS version: 4 updated: 2009/02/07 13:42:23
+dnl -----------
+dnl Check for suitable "ar" (archiver) options for updating an archive.
+AC_DEFUN([CF_AR_FLAGS],[
+AC_REQUIRE([CF_PROG_AR])
+
+AC_CACHE_CHECK(for options to update archives, cf_cv_ar_flags,[
+	cf_cv_ar_flags=unknown
+	for cf_ar_flags in -curv curv -crv crv -cqv cqv -rv rv
+	do
+		rm -f conftest.$ac_cv_objext
+		rm -f conftest.a
+
+		cat >conftest.$ac_ext <<EOF
+#line __oline__ "configure"
+int	testdata[[3]] = { 123, 456, 789 };
+EOF
+		if AC_TRY_EVAL(ac_compile) ; then
+			$AR $cf_ar_flags conftest.a conftest.$ac_cv_objext 2>&AC_FD_CC 1>/dev/null
+			if test -f conftest.a ; then
+				cf_cv_ar_flags=$cf_ar_flags
+				break
+			fi
+		else
+			CF_VERBOSE(cannot compile test-program)
+			break
+		fi
+	done
+	rm -f conftest.a conftest.$ac_ext conftest.$ac_cv_objext
+])
+test -z "$ARFLAGS" && ARFLAGS=$cf_cv_ar_flags
+AC_SUBST(ARFLAGS,$cf_cv_ar_flags)
+])
+dnl ---------------------------------------------------------------------------
+dnl CF_AWK_BIG_PRINTF version: 3 updated: 2008/12/27 12:30:03
 dnl -----------------
 dnl Check if awk can handle big strings using printf.  Some older versions of
 dnl awk choke on large strings passed via "%s".
@@ -362,19 +396,19 @@ dnl $1 = desired string size
 dnl $2 = variable to set with result
 AC_DEFUN([CF_AWK_BIG_PRINTF],
 [
-    case x$AWK in #(vi
-    x)
-        eval $2=no
-        ;;
-    *) #(vi
-        if ( ${AWK} 'BEGIN { xx = "x"; while (length(xx) < $1) { xx = xx "x"; }; printf("%s\n", xx); }' \
-            | $AWK '{ printf "%d\n", length([$]0); }' | $AWK 'BEGIN { eqls=0; recs=0; } { recs++; if ([$]0 == 12000) eqls++; } END { if (recs != 1 || eqls != 1) exit 1; }' 2>/dev/null >/dev/null ) ; then
-            eval $2=yes
-        else
-            eval $2=no
-        fi
-        ;;
-    esac
+	case x$AWK in #(vi
+	x)
+		eval $2=no
+		;;
+	*) #(vi
+		if ( ${AWK} 'BEGIN { xx = "x"; while (length(xx) < $1) { xx = xx "x"; }; printf("%s\n", xx); }' \
+			| $AWK '{ printf "%d\n", length([$]0); }' | $AWK 'BEGIN { eqls=0; recs=0; } { recs++; if ([$]0 == 12000) eqls++; } END { if (recs != 1 || eqls != 1) exit 1; }' 2>/dev/null >/dev/null ) ; then
+			eval $2=yes
+		else
+			eval $2=no
+		fi
+		;;
+	esac
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_BOOL_DECL version: 8 updated: 2004/01/30 15:51:18
@@ -1019,7 +1053,7 @@ AC_MSG_RESULT($cf_result)
 CXXFLAGS="$cf_save_CXXFLAGS"
 ])
 dnl ---------------------------------------------------------------------------
-dnl CF_FIND_LINKAGE version: 12 updated: 2007/07/29 20:13:53
+dnl CF_FIND_LINKAGE version: 13 updated: 2008/12/24 07:59:55
 dnl ---------------
 dnl Find a library (specifically the linkage used in the code fragment),
 dnl searching for it if it is not already in the library path.
@@ -1052,6 +1086,7 @@ AC_TRY_LINK([$1],[$2],
     cf_cv_find_linkage_$3=yes,[
     cf_cv_find_linkage_$3=no
 
+    CF_VERBOSE(find linkage for $3 library)
     CF_MSG_LOG([Searching for headers in [FIND_LINKAGE]($3,$6)])
 
     cf_save_CPPFLAGS="$CPPFLAGS"
@@ -1451,7 +1486,7 @@ if test "$GCC" = yes ; then
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_GCC_WARNINGS version: 23 updated: 2008/07/26 17:54:02
+dnl CF_GCC_WARNINGS version: 24 updated: 2009/02/01 15:21:00
 dnl ---------------
 dnl Check if the compiler supports useful warning options.  There's a few that
 dnl we don't use, simply because they're too noisy:
@@ -1484,7 +1519,6 @@ if test "$INTEL_COMPILER" = yes
 then
 # The "-wdXXX" options suppress warnings:
 # remark #1419: external declaration in primary source file
-# remark #1682: implicit conversion of a 64-bit integral type to a smaller integral type (potential portability problem)
 # remark #1683: explicit conversion of a 64-bit integral type to a smaller integral type (potential portability problem)
 # remark #1684: conversion from pointer to same-sized integral type (potential portability problem)
 # remark #193: zero used for undefined preprocessing identifier
@@ -1492,19 +1526,18 @@ then
 # remark #810: conversion from "int" to "Dimension={unsigned short}" may lose significant bits
 # remark #869: parameter "tw" was never referenced
 # remark #981: operands are evaluated in unspecified order
-# warning #269: invalid format string conversion
+# warning #279: controlling expression is constant
 
 	AC_CHECKING([for $CC warning options])
 	cf_save_CFLAGS="$CFLAGS"
 	EXTRA_CFLAGS="-Wall"
 	for cf_opt in \
 		wd1419 \
-		wd1682 \
 		wd1683 \
 		wd1684 \
 		wd193 \
-		wd279 \
 		wd593 \
+		wd279 \
 		wd810 \
 		wd869 \
 		wd981
@@ -1998,11 +2031,31 @@ done
 ])
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_HEADER_PATH version: 8 updated: 2002/11/10 14:46:59
+dnl CF_HEADER_PATH version: 9 updated: 2008/12/07 19:38:31
 dnl --------------
-dnl Construct a search-list for a nonstandard header-file
+dnl Construct a search-list of directories for a nonstandard header-file
+dnl
+dnl Parameters
+dnl	$1 = the variable to return as result
+dnl	$2 = the package name
 AC_DEFUN([CF_HEADER_PATH],
-[CF_SUBDIR_PATH($1,$2,include)
+[
+cf_header_path_list=""
+if test -n "${CFLAGS}${CPPFLAGS}" ; then
+	for cf_header_path in $CPPFLAGS $CFLAGS
+	do
+		case $cf_header_path in #(vi
+		-I*)
+			cf_header_path=`echo ".$cf_header_path" |sed -e 's/^...//' -e 's,/include$,,'`
+			CF_ADD_SUBDIR_PATH($1,$2,include,$cf_header_path,NONE)
+			cf_header_path_list="$cf_header_path_list [$]$1"
+			;;
+		esac
+	done
+fi
+
+CF_SUBDIR_PATH($1,$2,include)
+
 test "$includedir" != NONE && \
 test "$includedir" != "/usr/include" && \
 test -d "$includedir" && {
@@ -2017,6 +2070,7 @@ test -d "$oldincludedir" && {
 	test -d $oldincludedir/$2 && $1="[$]$1 $oldincludedir/$2"
 }
 
+$1="$cf_header_path_list [$]$1"
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_HELP_MESSAGE version: 3 updated: 1998/01/14 10:56:23
@@ -2026,7 +2080,7 @@ AC_DEFUN([CF_HELP_MESSAGE],
 [AC_DIVERT_HELP([$1])dnl
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_INCLUDE_DIRS version: 5 updated: 2006/10/14 15:23:15
+dnl CF_INCLUDE_DIRS version: 6 updated: 2009/01/06 19:37:40
 dnl ---------------
 dnl Construct the list of include-options according to whether we're building
 dnl in the source directory or using '--srcdir=DIR' option.  If we're building
@@ -2034,9 +2088,9 @@ dnl with gcc, don't append the includedir if it happens to be /usr/include,
 dnl since that usually breaks gcc's shadow-includes.
 AC_DEFUN([CF_INCLUDE_DIRS],
 [
-CPPFLAGS="-I. -I../include $CPPFLAGS"
+CPPFLAGS="$CPPFLAGS -I. -I../include"
 if test "$srcdir" != "."; then
-	CPPFLAGS="-I\${srcdir}/../include $CPPFLAGS"
+	CPPFLAGS="$CPPFLAGS -I\${srcdir}/../include"
 fi
 if test "$GCC" != yes; then
 	CPPFLAGS="$CPPFLAGS -I\${includedir}"
@@ -2143,7 +2197,7 @@ ifdef([AC_FUNC_FSEEKO],[
 ])
 ])
 dnl ---------------------------------------------------------------------------
-dnl CF_LDFLAGS_STATIC version: 4 updated: 2008/10/18 17:58:20
+dnl CF_LDFLAGS_STATIC version: 7 updated: 2009/04/04 18:31:04
 dnl -----------------
 dnl Check for compiler/linker flags used to temporarily force usage of static
 dnl libraries.  This depends on the compiler and platform.  Use this to help
@@ -2153,7 +2207,7 @@ AC_DEFUN([CF_LDFLAGS_STATIC],[
 
 if test "$GCC" = yes ; then
 	case $cf_cv_system_name in #(
-	OS/2*|os2*|aix[[45]]*) 	#( vi
+	OS/2*|os2*|aix[[4]]*|solaris2.1[[0-9]]|darwin*) 	#( vi
 		LDFLAGS_STATIC=
 		LDFLAGS_SHARED=
 		;;
@@ -2164,7 +2218,7 @@ if test "$GCC" = yes ; then
     esac
 else
 	case $cf_cv_system_name in #(
-	aix[[45]]*) 	#( from ld manpage
+	aix[[456]]*) 	#( from ld manpage
 		LDFLAGS_STATIC=-bstatic
 		LDFLAGS_SHARED=-bdynamic
 		;;
@@ -2179,7 +2233,7 @@ else
 		;;
 	osf[[45]]*)	#( from ld manpage osf4.0d, osf5.1
 		# alternative "-oldstyle_liblookup" (not in cc manpage)
-		LDFLAGS_STATIC=-noso 
+		LDFLAGS_STATIC=-noso
 		LDFLAGS_SHARED=-so_archive
 		;;
 	solaris2*)
@@ -2193,11 +2247,33 @@ AC_SUBST(LDFLAGS_STATIC)
 AC_SUBST(LDFLAGS_SHARED)
 ])
 dnl ---------------------------------------------------------------------------
-dnl CF_LIBRARY_PATH version: 7 updated: 2002/11/10 14:46:59
+dnl CF_LIBRARY_PATH version: 8 updated: 2008/12/07 19:38:31
 dnl ---------------
-dnl Construct a search-list for a nonstandard library-file
+dnl Construct a search-list of directories for a nonstandard library-file
+dnl
+dnl Parameters
+dnl	$1 = the variable to return as result
+dnl	$2 = the package name
 AC_DEFUN([CF_LIBRARY_PATH],
-[CF_SUBDIR_PATH($1,$2,lib)])dnl
+[
+cf_library_path_list=""
+if test -n "${LDFLAGS}${LIBS}" ; then
+	for cf_library_path in $LDFLAGS $LIBS
+	do
+		case $cf_library_path in #(vi
+		-L*)
+			cf_library_path=`echo ".$cf_library_path" |sed -e 's/^...//' -e 's,/lib$,,'`
+			CF_ADD_SUBDIR_PATH($1,$2,lib,$cf_library_path,NONE)
+			cf_library_path_list="$cf_library_path_list [$]$1"
+			;;
+		esac
+	done
+fi
+
+CF_SUBDIR_PATH($1,$2,lib)
+
+$1="$cf_library_path_list [$]$1"
+])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_LIB_PREFIX version: 8 updated: 2008/09/13 11:34:16
 dnl -------------
@@ -2216,7 +2292,7 @@ ifelse($1,,,[$1=$LIB_PREFIX])
 	AC_SUBST(LIB_PREFIX)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_LIB_RULES version: 53 updated: 2008/09/20 19:51:59
+dnl CF_LIB_RULES version: 55 updated: 2008/12/13 16:17:38
 dnl ------------
 dnl Append definitions and rules for the given models to the subdirectory
 dnl Makefiles, and the recursion rule for the top-level Makefile.  If the
@@ -2504,18 +2580,28 @@ cat >> Makefile <<CF_EOF
 install.libs uninstall.libs \\
 install.data uninstall.data ::
 $MAKE_TERMINFO	cd misc && \${MAKE} \${CF_MFLAGS} \[$]@
+CF_EOF
+
+if test "x$cf_with_manpages" = xyes; then
+cat >> Makefile <<CF_EOF
 
 install.man \\
 uninstall.man ::
 	cd man && \${MAKE} \${CF_MFLAGS} \[$]@
+CF_EOF
+fi
+
+cat >> Makefile <<CF_EOF
 
 distclean ::
 	rm -f config.cache config.log config.status Makefile include/ncurses_cfg.h
 	rm -f headers.sh headers.sed mk_shared_lib.sh
+	rm -f edit_man.* man_alias.*
 	rm -rf \${DIRS_TO_MAKE}
 CF_EOF
 
 # Special case: tack's manpage lives in its own directory.
+if test "x$cf_with_manpages" = xyes; then
 if test -d tack ; then
 if test -f $srcdir/$tack.h; then
 cat >> Makefile <<CF_EOF
@@ -2524,6 +2610,7 @@ install.man \\
 uninstall.man ::
 	cd tack && \${MAKE} \${CF_MFLAGS} \[$]@
 CF_EOF
+fi
 fi
 fi
 
@@ -2679,7 +2766,7 @@ fi
 ])
 ])
 dnl ---------------------------------------------------------------------------
-dnl CF_LIB_SUFFIX version: 15 updated: 2008/09/13 11:54:48
+dnl CF_LIB_SUFFIX version: 16 updated: 2008/12/27 12:30:03
 dnl -------------
 dnl Compute the library file-suffix from the given model name
 dnl $1 = model name
@@ -2689,40 +2776,44 @@ dnl The variable $LIB_SUFFIX, if set, prepends the variable to set.
 AC_DEFUN([CF_LIB_SUFFIX],
 [
 	AC_REQUIRE([CF_SUBST_NCURSES_VERSION])
-	case $1 in
-	libtool)
+	case $1 in #(vi
+	libtool) #(vi
 		$2='.la'
 		$3=[$]$2
 		;;
-	normal)
+	normal) #(vi
 		$2='.a'
 		$3=[$]$2
 		;;
-	debug)
+	debug) #(vi
 		$2='_g.a'
 		$3=[$]$2
 		;;
-	profile)
+	profile) #(vi
 		$2='_p.a'
 		$3=[$]$2
 		;;
-	shared)
+	shared) #(vi
 		case $cf_cv_system_name in
-		cygwin*)
+		aix[[56]]*) #(vi
+			$2='.a'
+			$3=[$]$2
+			;;
+		cygwin*) #(vi
 			$2='.dll'
 			$3='.dll.a'
 			;;
-		darwin*)
+		darwin*) #(vi
 			$2='.dylib'
 			$3=[$]$2
 			;;
-		hpux*)
+		hpux*) #(vi
 			case $target in
-			ia64*)
+			ia64*) #(vi
 				$2='.so'
 				$3=[$]$2
 				;;
-			*)
+			*) #(vi
 				$2='.sl'
 				$3=[$]$2
 				;;
@@ -2755,7 +2846,7 @@ AC_DEFUN([CF_LIB_TYPE],
 	test -n "$LIB_SUFFIX" && $2="${LIB_SUFFIX}[$]{$2}"
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_LINK_DATAONLY version: 8 updated: 2006/12/16 12:33:30
+dnl CF_LINK_DATAONLY version: 9 updated: 2009/01/01 20:21:38
 dnl ----------------
 dnl Some systems have a non-ANSI linker that doesn't pull in modules that have
 dnl only data (i.e., no functions), for example NeXT.  On those systems we'll
@@ -2772,7 +2863,7 @@ int	testdata[[3]] = { 123, 456, 789 };
 EOF
 	if AC_TRY_EVAL(ac_compile) ; then
 		mv conftest.o data.o && \
-		( $AR $AR_OPTS conftest.a data.o ) 2>&AC_FD_CC 1>/dev/null
+		( $AR $ARFLAGS conftest.a data.o ) 2>&AC_FD_CC 1>/dev/null
 	fi
 	rm -f conftest.$ac_ext data.o
 	cat >conftest.$ac_ext <<EOF
@@ -2791,7 +2882,7 @@ int	testfunc()
 EOF
 	if AC_TRY_EVAL(ac_compile); then
 		mv conftest.o func.o && \
-		( $AR $AR_OPTS conftest.a func.o ) 2>&AC_FD_CC 1>/dev/null
+		( $AR $ARFLAGS conftest.a func.o ) 2>&AC_FD_CC 1>/dev/null
 	fi
 	rm -f conftest.$ac_ext func.o
 	( eval $RANLIB conftest.a ) 2>&AC_FD_CC >/dev/null
@@ -2956,7 +3047,7 @@ fi
 AC_SUBST(MAKE_LOWER_TAGS)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_MANPAGE_FORMAT version: 7 updated: 2003/12/20 19:30:34
+dnl CF_MANPAGE_FORMAT version: 8 updated: 2009/01/11 20:30:50
 dnl -----------------
 dnl Option to allow user to override automatic configuration of manpage format.
 dnl There are several special cases:
@@ -2998,7 +3089,7 @@ unknown)
   cf_catonly=yes
   cf_example=date
 
-  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS="${IFS}${PATHSEP}"
+  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS="${IFS}${PATH_SEPARATOR}"
   for cf_dir in $MANPATH; do
     test -z "$cf_dir" && cf_dir=/usr/man
     for cf_name in $cf_dir/man*/$cf_example.[[01]]* $cf_dir/cat*/$cf_example.[[01]]* $cf_dir/man*/$cf_example $cf_dir/cat*/$cf_example
@@ -3687,17 +3778,17 @@ AC_DEFUN([CF_OBJ_SUBDIR],
 	esac
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_PATHSEP version: 3 updated: 2001/01/12 01:23:53
+dnl CF_PATHSEP version: 4 updated: 2009/01/11 20:30:23
 dnl ----------
 dnl Provide a value for the $PATH and similar separator
 AC_DEFUN([CF_PATHSEP],
 [
 	case $cf_cv_system_name in
-	os2*)	PATHSEP=';'  ;;
-	*)	PATHSEP=':'  ;;
+	os2*)	PATH_SEPARATOR=';'  ;;
+	*)	PATH_SEPARATOR=':'  ;;
 	esac
-ifelse($1,,,[$1=$PATHSEP])
-	AC_SUBST(PATHSEP)
+ifelse($1,,,[$1=$PATH_SEPARATOR])
+	AC_SUBST(PATH_SEPARATOR)
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_PATH_SYNTAX version: 12 updated: 2008/03/23 14:45:59
@@ -3735,6 +3826,38 @@ case ".[$]$1" in #(vi
   ifelse($2,,[AC_MSG_ERROR([expected a pathname, not \"[$]$1\"])],$2)
   ;;
 esac
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_PKG_CONFIG version: 3 updated: 2009/01/25 10:55:09
+dnl -------------
+dnl Check for the package-config program, unless disabled by command-line.
+AC_DEFUN([CF_PKG_CONFIG],
+[
+AC_MSG_CHECKING(if you want to use pkg-config)
+AC_ARG_WITH(pkg-config,
+	[  --with-pkg-config{=path} enable/disable use of pkg-config],
+	[cf_pkg_config=$withval],
+	[cf_pkg_config=yes])
+AC_MSG_RESULT($cf_pkg_config)
+
+case $cf_pkg_config in #(vi
+no) #(vi
+	PKG_CONFIG=none
+	;;
+yes) #(vi
+	AC_PATH_PROG(PKG_CONFIG, pkg-config, none)
+	;;
+*)
+	PKG_CONFIG=$withval
+	;;
+esac
+
+test -z "$PKG_CONFIG" && PKG_CONFIG=none
+if test "$PKG_CONFIG" != none ; then
+	CF_PATH_SYNTAX(PKG_CONFIG)
+fi
+
+AC_SUBST(PKG_CONFIG)
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_POSIX_C_SOURCE version: 6 updated: 2005/07/14 20:25:10
@@ -3872,6 +3995,13 @@ done
 
 ])dnl
 dnl ---------------------------------------------------------------------------
+dnl CF_PROG_AR version: 1 updated: 2009/01/01 20:15:22
+dnl ----------
+dnl Check for archiver "ar".
+AC_DEFUN([CF_PROG_AR],[
+AC_CHECK_TOOL(AR, ar, ar)
+])
+dnl ---------------------------------------------------------------------------
 dnl CF_PROG_AWK version: 1 updated: 2006/09/16 11:40:59
 dnl -----------
 dnl Check for awk, ensure that the check found something.
@@ -4003,7 +4133,7 @@ case $INSTALL in
 esac
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_PROG_LDCONFIG version: 1 updated: 2003/09/20 17:07:55
+dnl CF_PROG_LDCONFIG version: 2 updated: 2008/12/13 14:08:40
 dnl ----------------
 dnl Check for ldconfig, needed to fixup shared libraries that would be built
 dnl and then used in the install.
@@ -4012,7 +4142,7 @@ if test "$cross_compiling" = yes ; then
   LDCONFIG=:
 else
 case "$cf_cv_system_name" in #(vi
-freebsd*) #(vi
+dragonfly*|freebsd*) #(vi
   test -z "$LDCONFIG" && LDCONFIG="/sbin/ldconfig -R"
   ;;
 *) LDPATH=$PATH:/sbin:/usr/sbin
@@ -4147,7 +4277,7 @@ AC_MSG_RESULT(no)
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_SHARED_OPTS version: 53 updated: 2008/10/25 18:14:20
+dnl CF_SHARED_OPTS version: 57 updated: 2009/01/17 16:10:05
 dnl --------------
 dnl --------------
 dnl Attempt to determine the appropriate CC/LD options for creating a shared
@@ -4176,6 +4306,7 @@ AC_DEFUN([CF_SHARED_OPTS],
 	AC_REQUIRE([CF_SUBST_NCURSES_VERSION])
 	LOCAL_LDFLAGS=
 	LOCAL_LDFLAGS2=
+	LD_RPATH_OPT=
 	LD_SHARED_OPTS=
 	INSTALL_LIB="-m 644"
 
@@ -4219,6 +4350,12 @@ AC_DEFUN([CF_SHARED_OPTS],
 	cf_cv_shlib_version_infix=no
 
 	case $cf_cv_system_name in
+	aix[[56]]*)
+		if test "$GCC" = yes; then
+			CC_SHARED_OPTS=
+			MK_SHARED_LIB="$(CC) -shared"
+		fi
+		;;
 	beos*)
 		MK_SHARED_LIB='${CC} ${CFLAGS} -o $[@] -Xlinker -soname=`basename $[@]` -nostart -e 0'
 		;;
@@ -4239,7 +4376,7 @@ AC_DEFUN([CF_SHARED_OPTS],
 EOF
 		exec \[$]* -shared -Wl,--out-implib=../lib/\[$]{IMPORT_LIB} -Wl,--export-all-symbols -o ../lib/\[$]{SHARED_LIB}
 CF_EOF
-		chmod +x mk_shared_lib.sh 
+		chmod +x mk_shared_lib.sh
 		;;
 	darwin*)
 		EXTRA_CFLAGS="-no-cpp-precomp"
@@ -4272,10 +4409,10 @@ CF_EOF
 	irix*)
 		if test "$cf_cv_ld_rpath" = yes ; then
 			if test "$GCC" = yes; then
-				cf_ld_rpath_opt="-Wl,-rpath,"
+				LD_RPATH_OPT="-Wl,-rpath,"
 				EXTRA_LDFLAGS="-Wl,-rpath,\${libdir} $EXTRA_LDFLAGS"
 			else
-				cf_ld_rpath_opt="-rpath "
+				LD_RPATH_OPT="-rpath "
 				EXTRA_LDFLAGS="-rpath \${libdir} $EXTRA_LDFLAGS"
 			fi
 		fi
@@ -4294,7 +4431,7 @@ CF_EOF
 			LOCAL_LDFLAGS2="$LOCAL_LDFLAGS"
 		fi
 		if test "$cf_cv_ld_rpath" = yes ; then
-			cf_ld_rpath_opt="-Wl,-rpath,"
+			LD_RPATH_OPT="-Wl,-rpath,"
 			EXTRA_LDFLAGS="-Wl,-rpath,\${libdir} $EXTRA_LDFLAGS"
 		fi
 		CF_SHARED_SONAME
@@ -4306,12 +4443,12 @@ CF_EOF
 			LOCAL_LDFLAGS2="$LOCAL_LDFLAGS"
 		fi
 		if test "$cf_cv_ld_rpath" = yes ; then
-			cf_ld_rpath_opt="-Wl,-rpath,"
+			LD_RPATH_OPT="-Wl,-rpath,"
 			EXTRA_LDFLAGS="-Wl,-rpath,\${libdir} $EXTRA_LDFLAGS"
 		fi
 		CC_SHARED_OPTS="$CC_SHARED_OPTS -DPIC"
 		CF_SHARED_SONAME
-		MK_SHARED_LIB='${CC} ${CFLAGS} -Wl,-Bshareable,-soname,'$cf_cv_shared_soname',-stats,-lc -o $[@]'
+		MK_SHARED_LIB='${CC} ${CFLAGS} -shared -Wl,-Bshareable,-soname,'$cf_cv_shared_soname',-stats,-lc -o $[@]'
 		;;
 	nto-qnx*|openbsd*|freebsd[[12]].*)
 		CC_SHARED_OPTS="$CC_SHARED_OPTS -DPIC"
@@ -4323,15 +4460,15 @@ CF_EOF
 		if test "$DFT_LWR_MODEL" = "shared" && test "$cf_cv_ld_rpath" = yes ; then
 			LOCAL_LDFLAGS="-rpath \$(LOCAL_LIBDIR)"
 			LOCAL_LDFLAGS2="-rpath \${libdir} $LOCAL_LDFLAGS"
-			cf_ld_rpath_opt="-rpath "
+			LD_RPATH_OPT="-rpath "
 			EXTRA_LDFLAGS="-rpath \${libdir} $EXTRA_LDFLAGS"
 		fi
 		CF_SHARED_SONAME
-		MK_SHARED_LIB='${LD} -Bshareable -soname=`basename $[@]` -o $[@]'
+		MK_SHARED_LIB='${LD} -shared -Bshareable -soname=`basename $[@]` -o $[@]'
 		;;
 	netbsd*)
 		CC_SHARED_OPTS="$CC_SHARED_OPTS -DPIC"
-		test "$cf_cv_ld_rpath" = yes && cf_ld_rpath_opt="-Wl,-rpath,"
+		test "$cf_cv_ld_rpath" = yes && LD_RPATH_OPT="-Wl,-rpath,"
 		if test "$DFT_LWR_MODEL" = "shared" && test "$cf_cv_ld_rpath" = yes ; then
 			LOCAL_LDFLAGS="-Wl,-rpath,\$(LOCAL_LIBDIR)"
 			LOCAL_LDFLAGS2="$LOCAL_LDFLAGS"
@@ -4346,7 +4483,7 @@ CF_EOF
 			CF_SHARED_SONAME
 			MK_SHARED_LIB='${CC} ${CFLAGS} -shared -Wl,-soname,'$cf_cv_shared_soname' -o $[@]'
 		else
-			MK_SHARED_LIB='${LD} -Bshareable -o $[@]'
+			MK_SHARED_LIB='${LD} -shared -Bshareable -o $[@]'
 		fi
 		;;
 	osf*|mls+*)
@@ -4365,7 +4502,7 @@ CF_EOF
 			LOCAL_LDFLAGS2="$LOCAL_LDFLAGS"
 		fi
 		if test "$cf_cv_ld_rpath" = yes ; then
-			cf_ld_rpath_opt="-rpath"
+			LD_RPATH_OPT="-rpath"
 			# EXTRA_LDFLAGS="$LOCAL_LDFLAGS $EXTRA_LDFLAGS"
 		fi
 		cf_cv_rm_so_locs=yes
@@ -4400,12 +4537,19 @@ CF_EOF
 			LOCAL_LDFLAGS2="$LOCAL_LDFLAGS"
 		fi
 		if test "$cf_cv_ld_rpath" = yes ; then
-			cf_ld_rpath_opt="-R"
+			LD_RPATH_OPT="-R"
 			EXTRA_LDFLAGS="$LOCAL_LDFLAGS $EXTRA_LDFLAGS"
 		fi
 		CF_SHARED_SONAME
 		if test "$GCC" != yes; then
-			CC_SHARED_OPTS='-xcode=pic32'
+			cf_save_CFLAGS="$CFLAGS"
+			for cf_shared_opts in -xcode=pic13 -xcode=pic32 -Kpic -KPIC -O
+			do
+				CFLAGS="$cf_shared_opts $cf_save_CFLAGS"
+				AC_TRY_COMPILE([#include <stdio.h>],[printf("Hello\n");],[break])
+			done
+			CFLAGS="$cf_save_CFLAGS"
+			CC_SHARED_OPTS=$cf_shared_opts
 			MK_SHARED_LIB='${CC} -dy -G -h '$cf_cv_shared_soname' -o $[@]'
 		else
 			MK_SHARED_LIB='${CC} -shared -dy -G -h '$cf_cv_shared_soname' -o $[@]'
@@ -4438,18 +4582,19 @@ CF_EOF
 		;;
 	esac
 
-	if test -n "$cf_ld_rpath_opt" ; then
+	if test -n "$LD_RPATH_OPT" ; then
 		AC_MSG_CHECKING(if we need a space after rpath option)
 		cf_save_LIBS="$LIBS"
-		LIBS="$LIBS ${cf_ld_rpath_opt}$libdir"
+		LIBS="$LIBS ${LD_RPATH_OPT}$libdir"
 		AC_TRY_LINK(, , cf_rpath_space=no, cf_rpath_space=yes)
 		LIBS="$cf_save_LIBS"
 		AC_MSG_RESULT($cf_rpath_space)
-		test "$cf_rpath_space" = yes && cf_ld_rpath_opt="$cf_ld_rpath_opt "
-		MK_SHARED_LIB="$MK_SHARED_LIB $cf_ld_rpath_opt\${libdir}"
+		test "$cf_rpath_space" = yes && LD_RPATH_OPT="$LD_RPATH_OPT "
+		MK_SHARED_LIB="$MK_SHARED_LIB $LD_RPATH_OPT\${libdir}"
 	fi
 
 	AC_SUBST(CC_SHARED_OPTS)
+	AC_SUBST(LD_RPATH_OPT)
 	AC_SUBST(LD_SHARED_OPTS)
 	AC_SUBST(MK_SHARED_LIB)
 	AC_SUBST(LINK_PROGS)
@@ -4642,7 +4787,7 @@ if test "$cf_cv_sizechange" != no ; then
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_SRC_MODULES version: 18 updated: 2005/05/28 12:58:54
+dnl CF_SRC_MODULES version: 20 updated: 2008/12/27 12:30:03
 dnl --------------
 dnl For each parameter, test if the source-directory exists, and if it contains
 dnl a 'modules' file.  If so, add to the list $cf_cv_src_modules which we'll
@@ -4717,7 +4862,11 @@ AC_SUBST(TEST_DEPS)
 AC_SUBST(TEST_ARG2)
 AC_SUBST(TEST_DEP2)
 
-SRC_SUBDIRS="man include"
+SRC_SUBDIRS=
+if test "x$cf_with_manpages" != xno ; then
+	SRC_SUBDIRS="$SRC_SUBDIRS man"
+fi
+SRC_SUBDIRS="$SRC_SUBDIRS include"
 for cf_dir in $cf_cv_src_modules
 do
 	SRC_SUBDIRS="$SRC_SUBDIRS $cf_dir"
@@ -4728,8 +4877,8 @@ test "$cf_with_cxx_binding" != no && SRC_SUBDIRS="$SRC_SUBDIRS c++"
 
 ADA_SUBDIRS=
 if test "$cf_cv_prog_gnat_correct" = yes && test -f $srcdir/Ada95/Makefile.in; then
-   SRC_SUBDIRS="$SRC_SUBDIRS Ada95"
-   ADA_SUBDIRS="gen src samples"
+	SRC_SUBDIRS="$SRC_SUBDIRS Ada95"
+	ADA_SUBDIRS="gen src samples"
 fi
 
 SUB_MAKEFILES=
@@ -4739,11 +4888,11 @@ do
 done
 
 if test -n "$ADA_SUBDIRS"; then
-   for cf_dir in $ADA_SUBDIRS
-   do
-      SUB_MAKEFILES="$SUB_MAKEFILES Ada95/$cf_dir/Makefile"
-   done
-   AC_SUBST(ADA_SUBDIRS)
+	for cf_dir in $ADA_SUBDIRS
+	do
+		SUB_MAKEFILES="$SUB_MAKEFILES Ada95/$cf_dir/Makefile"
+	done
+	AC_SUBST(ADA_SUBDIRS)
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
@@ -5241,7 +5390,7 @@ if test "$with_gpm" != no ; then
 fi
 ])
 dnl ---------------------------------------------------------------------------
-dnl CF_WITH_LIBTOOL version: 19 updated: 2008/03/29 15:46:43
+dnl CF_WITH_LIBTOOL version: 23 updated: 2009/03/28 14:26:27
 dnl ---------------
 dnl Provide a configure option to incorporate libtool.  Define several useful
 dnl symbols for the makefile rules.
@@ -5261,18 +5410,18 @@ dnl	elif test ! -f $ACLOCAL/libtool.m4 ; then
 dnl		echo cannot find libtool.m4 file
 dnl		exit 1
 dnl	fi
-dnl	
+dnl
 dnl	LOCAL=aclocal.m4
 dnl	ORIG=aclocal.m4.orig
-dnl	
+dnl
 dnl	trap "mv $ORIG $LOCAL" 0 1 2 5 15
 dnl	rm -f $ORIG
 dnl	mv $LOCAL $ORIG
-dnl	
+dnl
 dnl	# sed the LIBTOOL= assignment to omit the current directory?
 dnl	sed -e 's/^LIBTOOL=.*/LIBTOOL=${LIBTOOL-libtool}/' $ACLOCAL/libtool.m4 >>$LOCAL
 dnl	cat $ORIG >>$LOCAL
-dnl	
+dnl
 dnl	autoconf-257 $*
 dnl
 AC_DEFUN([CF_WITH_LIBTOOL],
@@ -5306,17 +5455,17 @@ ifdef([AC_PROG_LIBTOOL],[
 	AC_PROG_LIBTOOL
 	# missing_content_AC_PROG_LIBTOOL}}
 ],[
- 	if test "$with_libtool" != "yes" ; then
+	if test "$with_libtool" != "yes" ; then
 		CF_PATH_SYNTAX(with_libtool)
 		LIBTOOL=$with_libtool
 	else
- 		AC_PATH_PROG(LIBTOOL,libtool)
- 	fi
- 	if test -z "$LIBTOOL" ; then
- 		AC_MSG_ERROR(Cannot find libtool)
- 	fi
+		AC_PATH_PROG(LIBTOOL,libtool)
+	fi
+	if test -z "$LIBTOOL" ; then
+		AC_MSG_ERROR(Cannot find libtool)
+	fi
 ])dnl
-	LIB_CREATE='${LIBTOOL} --mode=link ${CC} -rpath ${DESTDIR}${libdir} -version-info `cut -f1 ${srcdir}/VERSION` ${LIBTOOL_OPTS} -o'
+	LIB_CREATE='${LIBTOOL} --mode=link ${CC} -rpath ${DESTDIR}${libdir} -version-info `cut -f1 ${srcdir}/VERSION` ${LIBTOOL_OPTS} ${LT_UNDEF} -o'
 	LIB_OBJECT='${OBJECTS:.o=.lo}'
 	LIB_SUFFIX=.la
 	LIB_CLEAN='${LIBTOOL} --mode=clean'
@@ -5331,16 +5480,25 @@ ifdef([AC_PROG_LIBTOOL],[
 
 	# Save the version in a cache variable - this is not entirely a good
 	# thing, but the version string from libtool is very ugly, and for
-	# bug reports it might be useful to have the original string.
+	# bug reports it might be useful to have the original string. "("
 	cf_cv_libtool_version=`$LIBTOOL --version 2>&1 | sed -e '/^$/d' |sed -e '2,$d' -e 's/([[^)]]*)//g' -e 's/^[[^1-9]]*//' -e 's/[[^0-9.]].*//'`
 	AC_MSG_RESULT($cf_cv_libtool_version)
 	if test -z "$cf_cv_libtool_version" ; then
 		AC_MSG_ERROR(This is not GNU libtool)
 	fi
 
+	# special hack to add -no-undefined (which libtool should do for itself)
+	LT_UNDEF=
+	case "$cf_cv_system_name" in #(vi
+	cygwin*|mingw32*|uwin*|aix[[456]]) #(vi
+		LT_UNDEF=-no-undefined
+		;;
+	esac
+	AC_SUBST([LT_UNDEF])
+
 	# special hack to add --tag option for C++ compiler
-	case $cf_cv_libtool_version in
-	1.[[5-9]]*|[[2-9]]*)
+	case $cf_cv_libtool_version in #(vi
+	1.[[5-9]]*|[[2-9]].[[0-9.a-z]]*) #(vi
 		LIBTOOL_CXX="$LIBTOOL --tag=CXX"
 		LIBTOOL="$LIBTOOL --tag=CC"
 		;;
@@ -5393,7 +5551,7 @@ $3="$withval"
 AC_SUBST($3)dnl
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_WITH_PATHLIST version: 5 updated: 2001/12/10 01:28:30
+dnl CF_WITH_PATHLIST version: 6 updated: 2009/01/11 20:30:23
 dnl ----------------
 dnl Process an option specifying a list of colon-separated paths.
 dnl
@@ -5409,7 +5567,7 @@ AC_REQUIRE([CF_PATHSEP])
 AC_ARG_WITH($1,[$2 ](default: ifelse($4,,empty,$4)),,
 ifelse($4,,[withval=${$3}],[withval=${$3-ifelse($5,,$4,$5)}]))dnl
 
-IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS="${PATHSEP}"
+IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS="${PATH_SEPARATOR}"
 cf_dst_path=
 for cf_src_path in $withval
 do
@@ -5535,7 +5693,7 @@ CF_NO_LEAKS_OPTION(valgrind,
 	[USE_VALGRIND])
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_XOPEN_SOURCE version: 26 updated: 2008/07/27 11:26:57
+dnl CF_XOPEN_SOURCE version: 29 updated: 2009/07/16 21:07:04
 dnl ---------------
 dnl Try to get _XOPEN_SOURCE defined properly that we can use POSIX functions,
 dnl or adapt to the vendor's definitions to get equivalent functionality,
@@ -5552,7 +5710,7 @@ cf_XOPEN_SOURCE=ifelse($1,,500,$1)
 cf_POSIX_C_SOURCE=ifelse($2,,199506L,$2)
 
 case $host_os in #(vi
-aix[[45]]*) #(vi
+aix[[456]]*) #(vi
 	CPPFLAGS="$CPPFLAGS -D_ALL_SOURCE"
 	;;
 freebsd*|dragonfly*) #(vi
@@ -5563,13 +5721,16 @@ freebsd*|dragonfly*) #(vi
 	cf_XOPEN_SOURCE=600
 	CPPFLAGS="$CPPFLAGS -D_BSD_TYPES -D__BSD_VISIBLE -D_POSIX_C_SOURCE=$cf_POSIX_C_SOURCE -D_XOPEN_SOURCE=$cf_XOPEN_SOURCE"
 	;;
+hpux11*) #(vi
+	CPPFLAGS="$CPPFLAGS -D_HPUX_SOURCE -D_XOPEN_SOURCE=500"
+	;;
 hpux*) #(vi
 	CPPFLAGS="$CPPFLAGS -D_HPUX_SOURCE"
 	;;
 irix[[56]].*) #(vi
 	CPPFLAGS="$CPPFLAGS -D_SGI_SOURCE"
 	;;
-linux*|gnu*|k*bsd*-gnu) #(vi
+linux*|gnu*|mint*|k*bsd*-gnu) #(vi
 	CF_GNU_SOURCE
 	;;
 mirbsd*) #(vi

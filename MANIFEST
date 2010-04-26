@@ -172,6 +172,7 @@
 ./Makefile.os2
 ./NEWS
 ./README
+./README.MinGW
 ./README.emx
 ./TO-DO
 ./aclocal.m4
@@ -479,6 +480,7 @@
 ./form/fty_alnum.c
 ./form/fty_alpha.c
 ./form/fty_enum.c
+./form/fty_generic.c
 ./form/fty_int.c
 ./form/fty_ipv4.c
 ./form/fty_num.c
@@ -507,11 +509,13 @@
 ./include/hashed_db.h
 ./include/headers
 ./include/nc_alloc.h
+./include/nc_mingw.h
 ./include/nc_panel.h
 ./include/nc_tparm.h
 ./include/ncurses_cfg.hin
 ./include/ncurses_defs
-./include/ncurses_dll.h
+./include/ncurses_dll.h.in
+./include/ncurses_mingw.h
 ./include/term_entry.h
 ./include/termcap.h.in
 ./include/tic.h
@@ -640,6 +644,7 @@
 ./man/ncurses.3x
 ./man/panel.3x
 ./man/resizeterm.3x
+./man/tabs.1
 ./man/term.5
 ./man/term.7
 ./man/terminfo.head
@@ -694,6 +699,7 @@
 ./misc/emx.src
 ./misc/form.def
 ./misc/form.ref
+./misc/gen-pkgconfig.in
 ./misc/gen_edit.sh
 ./misc/jpf-indent
 ./misc/makedef.cmd
@@ -718,6 +724,7 @@
 ./mk-0th.awk
 ./mk-1st.awk
 ./mk-2nd.awk
+./mk-dlls.sh
 ./mk-hdr.awk
 ./mkdirs.sh
 ./ncurses/Makefile.in
@@ -748,6 +755,7 @@
 ./ncurses/base/lib_delch.c
 ./ncurses/base/lib_delwin.c
 ./ncurses/base/lib_dft_fgbg.c
+./ncurses/base/lib_driver.c
 ./ncurses/base/lib_echo.c
 ./ncurses/base/lib_endwin.c
 ./ncurses/base/lib_erase.c
@@ -817,6 +825,7 @@
 ./ncurses/fifo_defs.h
 ./ncurses/llib-lncurses
 ./ncurses/llib-lncursest
+./ncurses/llib-lncursestw
 ./ncurses/llib-lncursesw
 ./ncurses/modules
 ./ncurses/tinfo/MKcaptab.awk
@@ -863,6 +872,7 @@
 ./ncurses/tinfo/lib_tparm.c
 ./ncurses/tinfo/lib_tputs.c
 ./ncurses/tinfo/lib_ttyflags.c
+./ncurses/tinfo/make_hash.c
 ./ncurses/tinfo/make_keys.c
 ./ncurses/tinfo/name_match.c
 ./ncurses/tinfo/parse_entry.c
@@ -870,6 +880,7 @@
 ./ncurses/tinfo/read_termcap.c
 ./ncurses/tinfo/setbuf.c
 ./ncurses/tinfo/strings.c
+./ncurses/tinfo/tinfo_driver.c
 ./ncurses/tinfo/trim_sgr0.c
 ./ncurses/tinfo/use_screen.c
 ./ncurses/tinfo/write_entry.c
@@ -915,6 +926,8 @@
 ./ncurses/widechar/lib_vline_set.c
 ./ncurses/widechar/lib_wacs.c
 ./ncurses/widechar/lib_wunctrl.c
+./ncurses/win32con/gettimeofday.c
+./ncurses/win32con/win_driver.c
 ./panel/Makefile.in
 ./panel/headers
 ./panel/llib-lpanel
@@ -947,9 +960,11 @@
 ./progs/infocmp.c
 ./progs/modules
 ./progs/progs.priv.h
+./progs/tabs.c
 ./progs/tic.c
 ./progs/toe.c
 ./progs/tput.c
+./progs/transform.c
 ./progs/tset.c
 ./tar-copy.sh
 ./test/Makefile.in
@@ -963,6 +978,7 @@
 ./test/cardfile.c
 ./test/cardfile.dat
 ./test/chgat.c
+./test/clip_printw.c
 ./test/color_set.c
 ./test/configure
 ./test/configure.in
@@ -973,6 +989,7 @@
 ./test/demo_menus.c
 ./test/demo_panels.c
 ./test/demo_termcap.c
+./test/demo_terminfo.c
 ./test/ditto.c
 ./test/dots.c
 ./test/dots_mvcur.c
@@ -990,10 +1007,12 @@
 ./test/inch_wide.c
 ./test/inchs.c
 ./test/ins_wide.c
+./test/insdelln.c
 ./test/inserts.c
 ./test/key_names.c
 ./test/keynames.c
 ./test/knight.c
+./test/linedata.h
 ./test/linux-color.dat
 ./test/listused.sh
 ./test/lrtest.c
@@ -1011,6 +1030,10 @@
 ./test/savescreen.sh
 ./test/tclock.c
 ./test/test.priv.h
+./test/test_add_wchstr.c
+./test/test_addchstr.c
+./test/test_addstr.c
+./test/test_addwstr.c
 ./test/test_arrays.c
 ./test/test_get_wstr.c
 ./test/test_getstr.c
@@ -1026,4 +1049,5 @@
 ./test/worm.c
 ./test/xmas.c
 ./test/xterm-16color.dat
+./test/xterm-256color.dat
 ./test/xterm-88color.dat

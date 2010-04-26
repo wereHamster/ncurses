@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
+ * Copyright (c) 1998-2008,2009 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -27,12 +27,13 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Thomas E. Dickey 1996-2002                                      *
+ *  Author: Thomas E. Dickey 1996-on                                        *
+ *     and: Juergen Pfeifer                                                 *
  ****************************************************************************/
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: wresize.c,v 1.29 2008/06/07 13:59:01 tom Exp $")
+MODULE_ID("$Id: wresize.c,v 1.32 2009/10/24 22:15:00 tom Exp $")
 
 static int
 cleanup_lines(struct ldat *data, int length)
@@ -53,10 +54,13 @@ repair_subwindows(WINDOW *cmp)
     WINDOWLIST *wp;
     struct ldat *pline = cmp->_line;
     int row;
+#ifdef USE_SP_WINDOWLIST
+    SCREEN *sp = _nc_screen_of(cmp);
+#endif
 
     _nc_lock_global(curses);
 
-    for (each_window(wp)) {
+    for (each_window(SP_PARM, wp)) {
 	WINDOW *tst = &(wp->win);
 
 	if (tst->_parent == cmp) {
@@ -93,7 +97,7 @@ wresize(WINDOW *win, int ToLines, int ToCols)
     struct ldat *new_lines = 0;
 
 #ifdef TRACE
-    T((T_CALLED("wresize(%p,%d,%d)"), win, ToLines, ToCols));
+    T((T_CALLED("wresize(%p,%d,%d)"), (void *) win, ToLines, ToCols));
     if (win) {
 	TR(TRACE_UPDATE, ("...beg (%ld, %ld), max(%ld,%ld), reg(%ld,%ld)",
 			  (long) win->_begy, (long) win->_begx,

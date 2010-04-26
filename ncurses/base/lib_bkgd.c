@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright (c) 1998-2006,2008 Free Software Foundation, Inc.              *
+ * Copyright (c) 1998-2008,2009 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -36,7 +36,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_bkgd.c,v 1.36 2008/03/23 00:09:14 tom Exp $")
+MODULE_ID("$Id: lib_bkgd.c,v 1.38 2009/10/24 22:02:14 tom Exp $")
 
 /*
  * Set the window's background information.
@@ -48,7 +48,7 @@ static NCURSES_INLINE void
 #endif
 wbkgrndset(WINDOW *win, const ARG_CH_T ch)
 {
-    T((T_CALLED("wbkgdset(%p,%s)"), win, _tracech_t(ch)));
+    T((T_CALLED("wbkgdset(%p,%s)"), (void *) win, _tracech_t(ch)));
 
     if (win) {
 	attr_t off = AttrOf(win->_nc_bkgd);
@@ -120,14 +120,14 @@ wbkgrnd(WINDOW *win, const ARG_CH_T ch)
     int x, y;
     NCURSES_CH_T new_bkgd = CHDEREF(ch);
 
-    T((T_CALLED("wbkgd(%p,%s)"), win, _tracech_t(ch)));
+    T((T_CALLED("wbkgd(%p,%s)"), (void *) win, _tracech_t(ch)));
 
     if (win) {
 	NCURSES_CH_T old_bkgrnd;
 	wgetbkgrnd(win, &old_bkgrnd);
 
-	wbkgrndset(win, CHREF(new_bkgd));
-	wattrset(win, AttrOf(win->_nc_bkgd));
+	(void) wbkgrndset(win, CHREF(new_bkgd));
+	(void) wattrset(win, AttrOf(win->_nc_bkgd));
 
 	for (y = 0; y <= win->_maxy; y++) {
 	    for (x = 0; x <= win->_maxx; x++) {

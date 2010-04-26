@@ -2,10 +2,10 @@
 #
 # MKlib_gen.sh -- generate sources from curses.h macro definitions
 #
-# ($Id: MKlib_gen.sh,v 1.34 2008/08/30 19:20:50 tom Exp $)
+# ($Id: MKlib_gen.sh,v 1.36 2009/10/24 20:34:05 tom Exp $)
 #
 ##############################################################################
-# Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.                #
+# Copyright (c) 1998-2008,2009 Free Software Foundation, Inc.                #
 #                                                                            #
 # Permission is hereby granted, free of charge, to any person obtaining a    #
 # copy of this software and associated documentation files (the "Software"), #
@@ -199,7 +199,7 @@ $0 !~ /^P_/ {
 	}
 	second = first + 1;
 	if ( $first == "chtype" ) {
-		returnType = "Char";
+		returnType = "Chtype";
 	} else if ( $first == "SCREEN" ) {
 		returnType = "SP";
 	} else if ( $first == "WINDOW" ) {
@@ -289,8 +289,10 @@ $0 !~ /^P_/ {
 					call = call "%s"
 					comma = comma "_nc_visbuf2(" num ","
 					pointer = 0;
-				} else
+				} else {
 					call = call "%p"
+					comma = comma "(const void *)"
+				}
 			} else if (argcount != 0) {
 				if ( argtype == "int" || argtype == "short" ) {
 					call = call "%d"

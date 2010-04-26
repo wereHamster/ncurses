@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
+ * Copyright (c) 1998-2008,2009 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -34,7 +34,7 @@
  * v2.0 featuring strict ANSI/POSIX conformance, November 1993.
  * v2.1 with ncurses mouse support, September 1995
  *
- * $Id: bs.c,v 1.47 2008/08/03 18:30:28 tom Exp $
+ * $Id: bs.c,v 1.50 2009/10/24 21:24:24 tom Exp $
  */
 
 #include <test.priv.h>
@@ -222,7 +222,7 @@ intro(void)
 
     if ((tmpname = getlogin()) != 0) {
 	(void) strcpy(name, tmpname);
-	name[0] = toupper(UChar(name[0]));
+	name[0] = (char) toupper(UChar(name[0]));
     } else
 	(void) strcpy(name, dftname);
 
@@ -374,7 +374,7 @@ initgame(void)
 	for (j = 0; j < BWIDTH; j++)
 	    (void) addstr(" . ");
 #ifdef A_COLOR
-	attrset(0);
+	(void) attrset(0);
 #endif /* A_COLOR */
 	(void) addch(' ');
 	(void) addch((chtype) (i + 'A'));
@@ -392,7 +392,7 @@ initgame(void)
 	for (j = 0; j < BWIDTH; j++)
 	    (void) addstr(" . ");
 #ifdef A_COLOR
-	attrset(0);
+	(void) attrset(0);
 #endif /* A_COLOR */
 	(void) addch(' ');
 	(void) addch((chtype) (i + 'A'));
@@ -440,7 +440,7 @@ initgame(void)
 	/* get a command letter */
 	prompt(1, "Type one of [%s] to pick a ship.", docked + 1);
 	do {
-	    c = getcoord(PLAYER);
+	    c = (char) getcoord(PLAYER);
 	} while
 	    (!strchr(docked, c));
 
@@ -457,7 +457,7 @@ initgame(void)
 	}
 
 	do {
-	    c = getch();
+	    c = (char) getch();
 	} while
 	    (!(strchr("hjklrR", c) || c == FF));
 
@@ -773,7 +773,7 @@ hitship(int x, int y)
 #endif /* A_COLOR */
 				    (void) addch(MARK_MISS);
 #ifdef A_COLOR
-				    attrset(0);
+				    (void) attrset(0);
 #endif /* A_COLOR */
 				} else {
 				    pgoto(y1, x1);
@@ -799,7 +799,7 @@ hitship(int x, int y)
 #endif /* A_COLOR */
 			(void) addch(SHOWHIT);
 #ifdef A_COLOR
-			attrset(0);
+			(void) attrset(0);
 #endif /* A_COLOR */
 		    }
 		}
@@ -829,7 +829,7 @@ plyturn(void)
 	    break;
     }
     hit = IS_SHIP(board[COMPUTER][curx][cury]);
-    hits[PLAYER][curx][cury] = (hit ? MARK_HIT : MARK_MISS);
+    hits[PLAYER][curx][cury] = (char) (hit ? MARK_HIT : MARK_MISS);
     cgoto(cury, curx);
 #ifdef A_COLOR
     if (has_colors()) {
@@ -841,7 +841,7 @@ plyturn(void)
 #endif /* A_COLOR */
     (void) addch((chtype) hits[PLAYER][curx][cury]);
 #ifdef A_COLOR
-    attrset(0);
+    (void) attrset(0);
 #endif /* A_COLOR */
 
     prompt(1, "You %s.", hit ? "scored a hit" : "missed");
@@ -952,7 +952,8 @@ cpufire(int x, int y)
     bool hit, sunk;
     ship_t *ss = NULL;
 
-    hits[COMPUTER][x][y] = (hit = (board[PLAYER][x][y])) ? MARK_HIT : MARK_MISS;
+    hit = board[PLAYER][x][y] ? MARK_HIT : MARK_MISS;
+    hits[COMPUTER][x][y] = (char) hit;
     (void) mvprintw(PROMPTLINE, 0,
 		    "I shoot at %c%d. I %s!", y + 'A', x, hit ? "hit" :
 		    "miss");
@@ -971,7 +972,7 @@ cpufire(int x, int y)
 #endif /* A_COLOR */
     (void) addch((chtype) (hit ? SHOWHIT : SHOWSPLASH));
 #ifdef A_COLOR
-    attrset(0);
+    (void) attrset(0);
 #endif /* A_COLOR */
 
     return hit ? (sunk ? S_SUNK : S_HIT) : S_MISS;
@@ -1129,7 +1130,7 @@ playagain(void)
 	++cpuwon;
     else
 	++plywon;
-    j = 18 + strlen(name);
+    j = 18 + (int) strlen(name);
     if (plywon >= 10)
 	++j;
     if (cpuwon >= 10)

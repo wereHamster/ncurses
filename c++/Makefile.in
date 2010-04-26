@@ -1,6 +1,6 @@
-# $Id: Makefile.in,v 1.84 2007/04/28 15:29:12 tom Exp $
+# $Id: Makefile.in,v 1.87 2009/03/28 18:22:39 Charles.Wilson Exp $
 ##############################################################################
-# Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.                #
+# Copyright (c) 1998-2007,2009 Free Software Foundation, Inc.                #
 #                                                                            #
 # Permission is hereby granted, free of charge, to any person obtaining a    #
 # copy of this software and associated documentation files (the "Software"), #
@@ -55,16 +55,17 @@ LIBTOOL_COMPILE	= @LIB_COMPILE@
 LIBTOOL_LINK	= @LIB_LINK@
 LIBTOOL_INSTALL	= @LIB_INSTALL@
 LIBTOOL_UNINSTALL = @LIB_UNINSTALL@
+LT_UNDEF	= @LT_UNDEF@
 
 INSTALL		= @INSTALL@
 INSTALL_LIB	= @INSTALL@ @INSTALL_LIB@
 INSTALL_DATA	= @INSTALL_DATA@
 
 AR		= @AR@
-AR_OPTS		= @AR_OPTS@
+ARFLAGS		= @ARFLAGS@
 
 CXX_AR		= @CXX_AR@
-CXX_AR_OPTS	= @CXX_AR_OPTS@
+CXX_ARFLAGS	= @CXX_ARFLAGS@
 RANLIB		= @LIB_PREP@
 
 CXX		= @CXX@
@@ -95,7 +96,7 @@ LOCAL_LIBDIR	= @top_builddir@/lib
 
 LINK		= @LINK_PROGS@ $(LIBTOOL_LINK) @CXXLDFLAGS@
 SHLIB_DIRS	= -L../lib
-SHLIB_LIST	= $(SHLIB_DIRS) -lncurses@LIB_SUFFIX@ @SHLIB_LIST@
+SHLIB_LIST	= $(SHLIB_DIRS) -lform@LIB_SUFFIX@ -lmenu@LIB_SUFFIX@ -lpanel@LIB_SUFFIX@ -lncurses@LIB_SUFFIX@ @SHLIB_LIST@
 
 LIBROOT		= ncurses++
 
@@ -153,14 +154,14 @@ LIB_OBJS = \
 	$(MODEL)/cursesmain$o
 
 ../lib/$(LIBNAME_NORMAL) : $(LIB_OBJS)
-	$(CXX_AR) $(CXX_AR_OPTS) $@ $?
+	$(CXX_AR) $(CXX_ARFLAGS) $@ $?
 	$(RANLIB) $@
 
 ../lib/$(LIBNAME_LIBTOOL) : $(LIB_OBJS)
 	cd ../lib && $(LIBTOOL_LINK) $(CXX) $(CXXFLAGS) \
 		-o $(LIBNAME) $(LIB_OBJS:$o=.lo) \
 		-rpath $(INSTALL_PREFIX)$(libdir) \
-		-version-info $(NCURSES_MAJOR):$(NCURSES_MINOR) $(SHLIB_LIST)
+		-version-info $(NCURSES_MAJOR):$(NCURSES_MINOR) $(LT_UNDEF) $(SHLIB_LIST)
 
 OBJS_DEMO = $(MODEL)/demo$o
 

@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
+ * Copyright (c) 1998-2008,2009 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,7 +29,7 @@
 /****************************************************************************
  *  Author: Thomas E. Dickey                    1996-on                     *
  ****************************************************************************/
-/* $Id: test.priv.h,v 1.79 2008/10/04 21:53:41 tom Exp $ */
+/* $Id: test.priv.h,v 1.93 2009/10/24 21:30:13 tom Exp $ */
 
 #ifndef __TEST_PRIV_H
 #define __TEST_PRIV_H 1
@@ -42,14 +42,17 @@
  */
 #ifdef  HAVE_LIBFORMW
 #define HAVE_LIBFORMW 1
+#define HAVE_LIBFORM 1
 #endif
 
 #ifdef  HAVE_LIBMENUW
 #define HAVE_LIBMENUW 1
+#define HAVE_LIBMENU 1
 #endif
 
 #ifdef  HAVE_LIBPANELW
 #define HAVE_LIBPANELW 1
+#define HAVE_LIBPANEL 1
 #endif
 
 /*
@@ -207,19 +210,32 @@
 #define NEED_PTEM_H 0
 #endif
 
+#ifndef NEED_WCHAR_H
+#define NEED_WCHAR_H 0
+#endif
+
 #ifndef NO_LEAKS
 #define NO_LEAKS 0
 #endif
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <sys/types.h>
+#include <errno.h>
 
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
 #include <signal.h>	/* include before curses.h to work around glibc bug */
+
+#if NEED_WCHAR_H
+#include <wchar.h>
+#ifdef HAVE_LIBUTF8_H
+#include <libutf8.h>
+#endif
+#endif
 
 #if defined(HAVE_XCURSES)
 #include <xcurses.h>
@@ -359,6 +375,15 @@ extern int optind;
 #define KEY_MIN 256	/* not defined in Solaris 8 */
 #endif
 
+#ifdef DECL_CURSES_DATA_BOOLNAMES
+extern char	*boolnames[], *boolcodes[], *boolfnames[],
+		*numnames[], *numcodes[], *numfnames[],
+		*strnames[], *strcodes[], *strfnames[];
+#endif
+
+#define colored_chtype(ch, attr, pair) \
+	((ch) | (attr) | COLOR_PAIR(pair))
+
 /*
  * Workaround for HPUX
  */
@@ -373,6 +398,25 @@ extern int optind;
 #define getpary(w) __getpary(w)
 #endif
 
+/*
+ * Workaround in case getcchar() returns a positive value when the source
+ * string produces only a L'\0'.
+ */
+#define TEST_CCHAR(s, count, then_stmt, else_stmt) \
+	if ((count = getcchar(s, NULL, NULL, NULL, NULL)) > 0) { \
+	    wchar_t test_wch[CCHARW_MAX + 2]; \
+	    attr_t test_attrs; \
+	    short test_pair; \
+	    \
+	    if (getcchar( s, test_wch, &test_attrs, &test_pair, NULL) == OK \
+		&& test_wch[0] != L'\0') { \
+		then_stmt \
+	    } else { \
+		else_stmt \
+	    } \
+	} else { \
+	    else_stmt \
+	}
 /*
  * These usually are implemented as macros, but may be functions.
  */
@@ -464,6 +508,14 @@ extern int optind;
 #define EXIT_FAILURE 1
 #endif
 
+#ifdef __MINGW32__
+#include <nc_mingw.h>
+/* conflicts in test/firstlast.c */
+#undef large
+#undef small
+
+#endif
+
 /* Use this to quiet gcc's -Wwrite-strings warnings, but accommodate SVr4
  * curses which doesn't have const parameters declared (so far) in the places
  * that XSI shows.
@@ -521,6 +573,26 @@ extern char *tgoto(char *, int, int);	/* available, but not prototyped */
 #endif
 
 /*
+ * Workaround to build with Sun's default SVr4 curses.
+ */
+#ifdef NCURSES_VERSION
+#ifndef HAVE_VW_PRINTW
+#define HAVE_VW_PRINTW 1
+#endif
+#endif
+
+/*
+ * ncurses provides arrays of capability names; X/Open discarded these SVr4
+ * features.  Some implementations continue to provide them (see the test
+ * configure script).
+ */
+#ifdef NCURSES_VERSION
+#ifndef HAVE_CURSES_DATA_BOOLNAMES
+#define HAVE_CURSES_DATA_BOOLNAMES 1
+#endif
+#endif
+
+/*
  * ncurses uses const in some places where X/Open does (or did) not allow.
  */
 #ifdef NCURSES_VERSION
@@ -560,7 +632,7 @@ typedef int (*NCURSES_SCREEN_CB)(SCREEN *, void *);
 #define USING_SCREEN(s,func,data) use_screen(s, (NCURSES_SCREEN_CB) func, data)
 #define WANT_USE_SCREEN() extern void _nc_want_use_screen(void)
 #else
-#define USING_SCREEN(s,func,data) func(s,data)
+#define USING_SCREEN(s,func,data) func(data)
 #define WANT_USE_SCREEN() extern void _nc_want_use_screen(void)
 #endif
 
@@ -571,6 +643,15 @@ typedef int (*NCURSES_SCREEN_CB)(SCREEN *, void *);
 #define Trace(p)		/* nothing */
 #define USE_TRACE 0
 #endif
+
+/*
+ * Workaround for defective implementation of gcc attribute warn_unused_result
+ */
+#if defined(__GNUC__) && defined(_FORTIFY_SOURCE)
+#define IGNORE_RC(func) errno = func
+#else
+#define IGNORE_RC(func) (void) func
+#endif /* gcc workarounds */
 
 #define init_mb(state)	memset(&state, 0, sizeof(state))
 

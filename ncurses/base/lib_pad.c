@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright (c) 1998-2004,2006 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2006,2009 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,6 +29,8 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Thomas E. Dickey                        1996-on                 *
+ *     and: Juergen Pfeifer                         2009                    *
  ****************************************************************************/
 
 /*
@@ -40,21 +42,22 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_pad.c,v 1.41 2006/10/14 20:47:13 tom Exp $")
+MODULE_ID("$Id: lib_pad.c,v 1.45 2009/10/24 22:07:03 tom Exp $")
 
 NCURSES_EXPORT(WINDOW *)
-newpad(int l, int c)
+NCURSES_SP_NAME(newpad) (NCURSES_SP_DCLx int l, int c)
 {
     WINDOW *win;
     NCURSES_CH_T *ptr;
     int i;
 
-    T((T_CALLED("newpad(%d, %d)"), l, c));
+    T((T_CALLED("newpad(%p,%d, %d)"), (void *) SP_PARM, l, c));
 
     if (l <= 0 || c <= 0)
 	returnWin(0);
 
-    if ((win = _nc_makenew(l, c, 0, 0, _ISPAD)) == NULL)
+    win = NCURSES_SP_NAME(_nc_makenew) (NCURSES_SP_ARGx l, c, 0, 0, _ISPAD);
+    if (win == NULL)
 	returnWin(0);
 
     for (i = 0; i < l; i++) {
@@ -69,6 +72,14 @@ newpad(int l, int c)
 
     returnWin(win);
 }
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(WINDOW *)
+newpad(int l, int c)
+{
+    return NCURSES_SP_NAME(newpad) (CURRENT_SCREEN, l, c);
+}
+#endif
 
 NCURSES_EXPORT(WINDOW *)
 subpad(WINDOW *orig, int l, int c, int begy, int begx)
@@ -94,10 +105,14 @@ prefresh(WINDOW *win,
 	 int smaxrow,
 	 int smaxcol)
 {
+#if NCURSES_SP_FUNCS
+    SCREEN *sp = _nc_screen_of(win);
+#endif
+
     T((T_CALLED("prefresh()")));
     if (pnoutrefresh(win, pminrow, pmincol, sminrow, smincol, smaxrow,
 		     smaxcol) != ERR
-	&& doupdate() != ERR) {
+	&& NCURSES_SP_NAME(doupdate) (NCURSES_SP_ARG) != ERR) {
 	returnCode(OK);
     }
     returnCode(ERR);
@@ -116,6 +131,7 @@ pnoutrefresh(WINDOW *win,
     NCURSES_SIZE_T m, n;
     NCURSES_SIZE_T pmaxrow;
     NCURSES_SIZE_T pmaxcol;
+    SCREEN *sp;
 
 #if USE_SCROLL_HINTS
     const int my_len = 2;	/* parameterize the threshold for hardscroll */
@@ -124,13 +140,15 @@ pnoutrefresh(WINDOW *win,
 #endif
 
     T((T_CALLED("pnoutrefresh(%p, %d, %d, %d, %d, %d, %d)"),
-       win, pminrow, pmincol, sminrow, smincol, smaxrow, smaxcol));
+       (void *) win, pminrow, pmincol, sminrow, smincol, smaxrow, smaxcol));
 
     if (win == 0)
 	returnCode(ERR);
 
     if (!(win->_flags & _ISPAD))
 	returnCode(ERR);
+
+    sp = _nc_screen_of(win);
 
     /* negative values are interpreted as zero */
     if (pminrow < 0)
@@ -162,8 +180,8 @@ pnoutrefresh(WINDOW *win,
 	pmaxcol = pmincol + smaxcol - smincol;
     }
 
-    if (smaxrow >= screen_lines
-	|| smaxcol >= screen_columns
+    if (smaxrow >= screen_lines(sp)
+	|| smaxcol >= screen_columns(sp)
 	|| sminrow > smaxrow
 	|| smincol > smaxcol)
 	returnCode(ERR);
@@ -194,13 +212,13 @@ pnoutrefresh(WINDOW *win,
      * merely change the costs of various update cases.
      */
 #if USE_SCROLL_HINTS
-    wide = (smincol < my_len && smaxcol > (newscr->_maxx - my_len));
+    wide = (smincol < my_len && smaxcol > (NewScreen(sp)->_maxx - my_len));
 #endif
 
     for (i = pminrow, m = sminrow + win->_yoffset;
-	 i <= pmaxrow && m <= newscr->_maxy;
+	 i <= pmaxrow && m <= NewScreen(sp)->_maxy;
 	 i++, m++) {
-	register struct ldat *nline = &newscr->_line[m];
+	register struct ldat *nline = &NewScreen(sp)->_line[m];
 	register struct ldat *oline = &win->_line[i];
 	for (j = pmincol, n = smincol; j <= pmaxcol; j++, n++) {
 	    NCURSES_CH_T ch = oline->text[j];
@@ -229,9 +247,9 @@ pnoutrefresh(WINDOW *win,
 		|| nind > smaxrow) {
 		nind = _NEWINDEX;
 	    } else if (displaced) {
-		register struct ldat *pline = &curscr->_line[nind];
+		register struct ldat *pline = &CurScreen(sp)->_line[nind];
 		for (j = 0; j <= my_len; j++) {
-		    int k = newscr->_maxx - j;
+		    int k = NewScreen(sp)->_maxx - j;
 		    if (pline->text[j] != nline->text[j]
 			|| pline->text[k] != nline->text[k]) {
 			nind = _NEWINDEX;
@@ -266,7 +284,7 @@ pnoutrefresh(WINDOW *win,
 
     if (win->_clear) {
 	win->_clear = FALSE;
-	newscr->_clear = TRUE;
+	NewScreen(sp)->_clear = TRUE;
     }
 
     /*
@@ -278,10 +296,10 @@ pnoutrefresh(WINDOW *win,
 	&& win->_curx >= pmincol
 	&& win->_cury <= pmaxrow
 	&& win->_curx <= pmaxcol) {
-	newscr->_cury = win->_cury - pminrow + win->_begy + win->_yoffset;
-	newscr->_curx = win->_curx - pmincol + win->_begx;
+	NewScreen(sp)->_cury = win->_cury - pminrow + win->_begy + win->_yoffset;
+	NewScreen(sp)->_curx = win->_curx - pmincol + win->_begx;
     }
-    newscr->_leaveok = win->_leaveok;
+    NewScreen(sp)->_leaveok = win->_leaveok;
     win->_flags &= ~_HASMOVED;
 
     /*
@@ -302,7 +320,7 @@ pnoutrefresh(WINDOW *win,
 NCURSES_EXPORT(int)
 pechochar(WINDOW *pad, const chtype ch)
 {
-    T((T_CALLED("pechochar(%p, %s)"), pad, _tracechtype(ch)));
+    T((T_CALLED("pechochar(%p, %s)"), (void *) pad, _tracechtype(ch)));
 
     if (pad == 0)
 	returnCode(ERR);

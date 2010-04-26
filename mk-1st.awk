@@ -1,6 +1,6 @@
-# $Id: mk-1st.awk,v 1.78 2007/03/24 22:10:55 tom Exp $
+# $Id: mk-1st.awk,v 1.81 2009/03/28 18:59:51 Charles.Wilson Exp $
 ##############################################################################
-# Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.                #
+# Copyright (c) 1998-2008,2009 Free Software Foundation, Inc.                #
 #                                                                            #
 # Permission is hereby granted, free of charge, to any person obtaining a    #
 # copy of this software and associated documentation files (the "Software"), #
@@ -59,7 +59,7 @@ function is_ticlib() {
 		return ( subset ~ /^ticlib$/ );
 	}
 function is_termlib() {
-		return ( subset ~ /^(ticlib\+)?termlib(\+ext_tinfo)?$/ );
+		return ( subset ~ /^(ticlib\+)?termlib((\+[^+ ]+)*\+ext_tinfo)?$/ );
 	}
 # see lib_name
 function lib_name_of(a_name) {
@@ -386,7 +386,13 @@ END	{
 				}
 				end_name = lib_name;
 				printf "../lib/%s : $(%s_OBJS)\n", lib_name, OBJS
-				printf "\tcd ../lib && $(LIBTOOL_LINK) $(%s) -o %s $(%s_OBJS:$o=.lo) -rpath $(DESTDIR)$(libdir) -version-info $(NCURSES_MAJOR):$(NCURSES_MINOR) $(SHLIB_LIST)\n", compile, lib_name, OBJS
+				if ( is_ticlib() ) {
+					printf "\tcd ../lib && $(LIBTOOL_LINK) $(%s) -o %s $(%s_OBJS:$o=.lo) -rpath $(DESTDIR)$(libdir) -version-info $(NCURSES_MAJOR):$(NCURSES_MINOR) $(LT_UNDEF) $(TICS_LIST)\n", compile, lib_name, OBJS
+				} else if ( is_termlib() ) {
+					printf "\tcd ../lib && $(LIBTOOL_LINK) $(%s) -o %s $(%s_OBJS:$o=.lo) -rpath $(DESTDIR)$(libdir) -version-info $(NCURSES_MAJOR):$(NCURSES_MINOR) $(LT_UNDEF) $(TINFO_LIST)\n", compile, lib_name, OBJS
+				} else {
+					printf "\tcd ../lib && $(LIBTOOL_LINK) $(%s) -o %s $(%s_OBJS:$o=.lo) -rpath $(DESTDIR)$(libdir) -version-info $(NCURSES_MAJOR):$(NCURSES_MINOR) $(LT_UNDEF) $(SHLIB_LIST)\n", compile, lib_name, OBJS
+				}
 				print  ""
 				print  "install \\"
 				print  "install.libs \\"
@@ -404,7 +410,7 @@ END	{
 			{
 				end_name = lib_name;
 				printf "../lib/%s : $(%s_OBJS)\n", lib_name, OBJS
-				printf "\t$(AR) $(AR_OPTS) $@ $?\n"
+				printf "\t$(AR) $(ARFLAGS) $@ $?\n"
 				printf "\t$(RANLIB) $@\n"
 				if ( host == "vxworks" )
 				{

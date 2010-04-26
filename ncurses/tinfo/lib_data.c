@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
+ * Copyright (c) 1998-2008,2009 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -30,6 +30,7 @@
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  *     and: Thomas E. Dickey                        1996-on                 *
+ *     and: Juergen Pfeifer                                                 *
  ****************************************************************************/
 
 /*
@@ -41,7 +42,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_data.c,v 1.52 2008/08/23 22:16:15 tom Exp $")
+MODULE_ID("$Id: lib_data.c,v 1.55 2009/06/07 14:48:25 tom Exp $")
 
 /*
  * OS/2's native linker complains if we don't initialize public data when
@@ -51,17 +52,17 @@ MODULE_ID("$Id: lib_data.c,v 1.52 2008/08/23 22:16:15 tom Exp $")
 NCURSES_EXPORT(WINDOW *)
 NCURSES_PUBLIC_VAR(stdscr) (void)
 {
-    return SP ? SP->_stdscr : 0;
+    return CURRENT_SCREEN ? StdScreen(CURRENT_SCREEN) : 0;
 }
 NCURSES_EXPORT(WINDOW *)
 NCURSES_PUBLIC_VAR(curscr) (void)
 {
-    return SP ? SP->_curscr : 0;
+    return CURRENT_SCREEN ? CurScreen(CURRENT_SCREEN) : 0;
 }
 NCURSES_EXPORT(WINDOW *)
 NCURSES_PUBLIC_VAR(newscr) (void)
 {
-    return SP ? SP->_newscr : 0;
+    return CURRENT_SCREEN ? NewScreen(CURRENT_SCREEN) : 0;
 }
 #else
 NCURSES_EXPORT_VAR(WINDOW *) stdscr = 0;
@@ -93,7 +94,7 @@ _nc_screen(void)
 NCURSES_EXPORT(int)
 _nc_alloc_screen(void)
 {
-    return ((my_screen = typeCalloc(SCREEN, 1)) != 0);
+    return ((my_screen = _nc_alloc_screen_sp()) != 0);
 }
 
 NCURSES_EXPORT(void)
@@ -103,6 +104,7 @@ _nc_set_screen(SCREEN *sp)
 }
 
 #else
+
 NCURSES_EXPORT_VAR(SCREEN *) SP = NULL; /* Some linkers require initialized data... */
 #endif
 /* *INDENT-OFF* */
@@ -140,7 +142,9 @@ NCURSES_EXPORT_VAR(NCURSES_GLOBALS) _nc_globals = {
     0,				/* tgetent_index */
     0,				/* tgetent_sequence */
 
+#ifndef USE_SP_WINDOWLIST
     0,				/* _nc_windowlist */
+#endif
 
 #if USE_HOME_TERMINFO
     NULL,			/* home_terminfo */
@@ -174,7 +178,9 @@ NCURSES_EXPORT_VAR(NCURSES_GLOBALS) _nc_globals = {
     { CHARS_0s, CHARS_0s },	/* traceatr_color_buf */
     0,				/* traceatr_color_sel */
     -1,				/* traceatr_color_last */
-
+#if !defined(USE_PTHREADS) && USE_REENTRANT
+    0,				/* nested_tracef */
+#endif
 #endif /* TRACE */
 #ifdef USE_PTHREADS
     PTHREAD_MUTEX_INITIALIZER,	/* mutex_curses */
@@ -196,8 +202,10 @@ NCURSES_EXPORT_VAR(NCURSES_PRESCREEN) _nc_prescreen = {
     TRUE,			/* use_env */
     FALSE,			/* filter_mode */
     A_NORMAL,			/* previous_attr */
+#ifndef USE_SP_RIPOFF
     RIPOFF_0s,			/* ripoff */
     NULL,			/* rsp */
+#endif
     {				/* tparm_state */
 #ifdef TRACE
 	NULL,			/* tname */
@@ -225,6 +233,8 @@ NCURSES_EXPORT_VAR(NCURSES_PRESCREEN) _nc_prescreen = {
     NULL,			/* real_acs_map */
     0,				/* LINES */
     0,				/* COLS */
+    8,				/* TABSIZE */
+    1000,			/* ESCDELAY */
     0,				/* cur_term */
 #ifdef TRACE
     0L,				/* _outchars */
@@ -233,6 +243,23 @@ NCURSES_EXPORT_VAR(NCURSES_PRESCREEN) _nc_prescreen = {
 #endif
 };
 /* *INDENT-ON* */
+
+/*
+ * wgetch() and other functions with a WINDOW* parameter may use a SCREEN*
+ * internally, and it is useful to allow those to be invoked without switching
+ * SCREEN's, e.g., for multi-threaded applications.
+ */
+NCURSES_EXPORT(SCREEN *)
+_nc_screen_of(WINDOW *win)
+{
+    SCREEN *sp = 0;
+
+    if (win != 0) {
+	WINDOWLIST *wp = (WINDOWLIST *) win;
+	sp = wp->screen;
+    }
+    return (sp);
+}
 
 /******************************************************************************/
 #ifdef USE_PTHREADS

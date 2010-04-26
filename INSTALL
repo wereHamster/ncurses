@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- Copyright (c) 1998-2006,2008 Free Software Foundation, Inc.               --
+-- Copyright (c) 1998-2008,2009 Free Software Foundation, Inc.               --
 --                                                                           --
 -- Permission is hereby granted, free of charge, to any person obtaining a   --
 -- copy of this software and associated documentation files (the             --
@@ -25,7 +25,7 @@
 -- sale, use or other dealings in this Software without prior written        --
 -- authorization.                                                            --
 -------------------------------------------------------------------------------
--- $Id: INSTALL,v 1.135 2008/11/02 21:13:51 tom Exp $
+-- $Id: INSTALL,v 1.140 2009/08/01 19:32:04 tom Exp $
 ---------------------------------------------------------------------
              How to install Ncurses/Terminfo on your system
 ---------------------------------------------------------------------
@@ -525,6 +525,11 @@ SUMMARY OF CONFIGURE OPTIONS:
 	terminfo entries.  This is the default, unless you have disabled the
 	extended functions.
 
+    --enable-pc-files
+	If pkg-config is found (see --with-pkg-config), generate ".pc" files
+	for each of the libraries, and install them in pkg-config's library
+	directory.
+
     --enable-reentrant
 	Compile experimental configuration which improves reentrant use of the
 	library by reducing global and static variables.  This option is also
@@ -681,6 +686,10 @@ SUMMARY OF CONFIGURE OPTIONS:
 	legacy applications.  For those systems, you can configure ncurses
 	to use a terminfo database which is compatible with the native
 	applications.
+
+    --with-ccharw-max=XXX
+	Override the size of the wide-character array in cchar_t structures.
+	Changing this will alter the binary interface.  This defaults to 5.
 
     --with-chtype=TYPE
 	Override type of chtype, which stores the video attributes and (if
@@ -850,6 +859,9 @@ SUMMARY OF CONFIGURE OPTIONS:
 	those using termcap, do not use the higher speeds.  Your application
 	(or system, in general) may or may not.
 
+    --with-pkg-config=[DIR]
+	Check for pkg-config, optionally specifying its path.
+
     --with-profile
 	Generate profile-libraries These are named by adding "_p" to the root,
 	e.g., libncurses_p.a
@@ -946,6 +958,17 @@ SUMMARY OF CONFIGURE OPTIONS:
 	For testing, compile with debug option.
 	This also sets the --disable-leaks option.
 
+    --with-wrap-prefix=XXX
+	When using the --enable-reentrant option, ncurses redefines variables
+	that would be global in curses, e.g., LINES, as a macro that calls a
+	"wrapping" function which fetches the data from the current SCREEN
+	structure.  Normally that function is named by prepending "_nc_" to the
+	variable's name.  The function is technically private (since portable
+	applications would not refer directly to it).  But according to one
+	line of reasoning, it is not the same type of "private" as functions
+	which applications should not call even via a macro.  This configure
+	option lets you choose the prefix for these wrapped variables.
+
     --without-ada
 	Suppress the configure script's check for Ada95, do not build the
 	Ada95 binding and related demo.
@@ -974,6 +997,9 @@ SUMMARY OF CONFIGURE OPTIONS:
 
     --without-dlsym
 	Do not use dlsym() to load GPM dynamically.
+
+    --without-manpages
+	Tell the configure script to suppress the install of ncurses' manpages.
 
     --without-progs
 	Tell the configure script to suppress the build of ncurses' application
@@ -1584,7 +1610,8 @@ CONFIGURING FALLBACK ENTRIES:
 	tree is accessible (that is, in single-user mode or at OS installation
 	time) the ncurses library can be compiled to include an array of
 	pre-fetched fallback entries.  This must be done on a machine which
-	has ncurses' infocmp and terminfo database installed.
+	has ncurses' infocmp and terminfo database installed (as well as
+	ncurses' tic and infocmp programs).
 
 	These entries are checked by setupterm() only when the conventional
 	fetches from the terminfo tree and the termcap fallback (if configured)
@@ -1734,6 +1761,10 @@ BUILDING NCURSES WITH A CROSS-COMPILER
 	install tree.  Note that in this case (as with the --with-fallbacks
 	option), ncurses uses the development platform's tic to do the
 	"make install.data" portion.
+
+	The system's tic program is used to install the terminal database,
+	even for cross-compiles.  For best results, the tic program should
+	be from the most current version of ncurses.
 
 BUGS:
 	Send any feedback to the ncurses mailing list at
